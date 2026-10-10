@@ -94,6 +94,6 @@ description: 面向企业 IM 智能客服的知识检索方法。当用户咨询
 ## 与其他模块协作
 
 - `agent.md`：决定是否检索、是否追问与何时结束。
-- `faq-support`（计划中）：利用确认的产品资料解释使用方法。
-- `issue-support`（计划中）：利用规则与案例进行多轮诊断。
+- `faq-support`：利用确认的产品资料解释使用方法。
+- `issue-support`：利用规则与案例进行多轮诊断。
 - KMS、表格、GitHub、OpenViking：属于**外部数据来源/工具**，不是本 Skill 自带的能力。
