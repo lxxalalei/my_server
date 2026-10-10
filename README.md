@@ -1,40 +1,37 @@
-# Mars Customer Service Agent（开发项目）
+# 火星智能客服
 
-面向企业 IM「火星」的智能客服 Agent 配置与测试项目。当前采用**单 Agent 自主决策**方案，优先解决产品功能咨询和使用异常，不引入多 Agent 编排。
+一个客服 Agent，按需使用五个 Skills 处理产品咨询、异常排查和需求建议；后台维护会话负责知识沉淀。知识来源是你的 [knowledge 仓库](https://github.com/lxxalalei/knowledge)。
 
-> 当前状态：**配置已编写、知识库为模拟数据，尚未接入公司 KMS、在线表格、OpenViking 或工单系统，也尚未在公司 Claude Runtime 中完成回归测试**。
+## 使用
 
-## 双仓库分工
+需要 Claude Code 和 Python 3.10+。拉取本仓库后，在仓库根目录运行：
 
-| 位置 | 用途 |
+```bash
+python3 tools/support.py sync
+claude
+```
+
+Claude Code 直接加载 `CLAUDE.md` 和 `.claude/skills/`。知识库更新后再次运行 `sync`，会同步 `knowledge-source.json` 指定分支的当前内容；每次读取保留来源版本。
+
+正常提问即可使用客服。需要整理已解决案例时，新开一次维护会话，说明“按 curator.md 整理这些案例”；审核和撤回由你明确提出。
+
+## 主要文件
+
+| 文件 | 用途 |
 | --- | --- |
-| [my_server（本仓库）](https://github.com/lxxalalei/my_server) | Agent 总控、Skills、测试用例 |
-| [knowledge](https://github.com/lxxalalei/knowledge) | **虚构演示知识**；不代表真实火星产品行为 |
-| 公司 KMS（未来适配） | 真实的 Markdown 产品知识及操作规则 |
-| 公司在线表格（未来适配） | 结构化已知问题、适用版本、解决状态等 |
-| OpenViking（按需） | 云 Agent 平台提供的共享经验与索引补充能力 |
+| [agent.md](agent.md) | 客服总控与群内人工协作 |
+| [.claude/skills/](.claude/skills/) | 五个在线 Skills：意图、咨询、排查、需求、知识检索；另有后台知识沉淀 Skill |
+| [curator.md](curator.md) | 后台知识维护角色 |
+| [knowledge-source.json](knowledge-source.json) | 知识仓库与分支 |
+| [tools/support.py](tools/support.py) | 知识同步、检索、需求与案例存储 |
+| [docs/tools.md](docs/tools.md) | 工具命令与字段 |
 
-## 项目文件
+运行数据统一放在 `data/`：知识缓存位于 `knowledge/`，需求位于 `requirements/`，知识候选位于 `curation/`。候选批准后才能被客服检索。`data/` 不进入 Git；源码迁移靠 Git，已有业务记录按需另外保留。
 
-- [agent.md](agent.md)：主 Agent 总控 v0.1。负责理解诉求、切换流程、持续跟进与兜底。
-- [knowledge-search](skills/knowledge-search/SKILL.md)：统一知识检索 v0.1。控制何时查、查哪里、如何核对依据。
-- [faq-support](skills/faq-support/SKILL.md)：使用咨询 v0.1。组织操作说明、功能和权限回答。
-- [issue-support](skills/issue-support/SKILL.md)：使用异常 v0.1。持续排查并据反馈更新判断。
-- [知识检索用例](tests/knowledge-search-cases.md)：12 条知识检索与事实边界测试。
-- [客服端到端用例](tests/customer-service-cases.md)：12 条单轮场景、3 组多轮脚本，**均待公司 Claude Runtime 验证**。
+## 验证
 
-## 第一轮测试方式
+```bash
+python3 -m unittest discover -s tests -v
+```
 
-1. 在支持读取 GitHub 文件的 Agent 运行环境中加载 `agent.md`，绑定三个 Skill 及实际 GitHub 读取工具。
-2. 使用 [knowledge](https://github.com/lxxalalei/knowledge) 作为**演示数据源**，并明确所有答案仅代表 DEMO-v0.1。
-3. 对照 [客服端到端用例](tests/customer-service-cases.md) 逐条提问；要求 Agent 实际读取所需知识正文。
-4. 记录实际回答、使用的知识依据和是否通过；优先修复事实编造、重复追问、错误解决状态。
-5. 完成模拟测试后，再评估如何用公司 KMS CLI / 在线表格 CLI 替换 GitHub 读取工具。
-
-**注意**：将 `SKILL.md` 放在仓库里，并不等于云 Agent 平台已经自动安装、加载或授予对应工具权限。要以公司平台的 Agent Instructions、Skills 与 CLI 接入规则为准。
-
-## 正式部署注意事项
-
-- 获取公司 KMS/在线表格 CLI 的工具说明与结果字段后，再编写实际适配，不预先编造命令。
-- 正式知识以 KMS/在线表格为准；是否需要 OpenViking 做二次索引，以测试效果决定。
-- 禁止提交公司内部资料、密钥、真实员工咨询原文等内容到公开仓库。
+自己试用时，重点核对：答案有知识正文依据；排查无依据时交给同群产品同事；明确要求保存后确有需求记录；案例没有恢复证据时不入库，未审核时不进入检索。
